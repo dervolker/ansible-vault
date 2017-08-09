@@ -51,6 +51,7 @@ class LookupModule(LookupBase):
             # ansible-1.9.x
             terms = ansible.utils.listify_lookup_plugin_terms(terms, basedir, inject)
 
+        terms = self.ansible1_to_ansible2_facade(terms)
         term_split = terms[0].split(' ', 1)
         key = term_split[0]
 
@@ -150,6 +151,21 @@ class LookupModule(LookupBase):
                 _vault_cache[key] = result
 
         return [result['data'][field]] if field is not None else [result['data']]
+
+    def ansible1_to_ansible2_facade(self, terms):
+        """
+        >>> LookupModule(None, None).ansible1_to_ansible2_facade(['key', 'value'])
+        ['key', 'value']
+        >>> LookupModule(None, None).ansible1_to_ansible2_facade([['key', 'value']])
+        ['key', 'value']
+        """
+        # If it's Ansible 1 Syntax with Ansible 1, terms would be: ['path', 'key']
+        # If it's Ansible 2 Syntax with Ansible 2, terms would be: ['path', 'key']
+        # If it's Ansible 1 Syntax with Ansible 2, terms would be: [['path', 'key']]
+        # Make the Ansible 2 Version compatible with Ansible 1 Syntax to avoid breaking builds
+        if isinstance(terms[0], list):
+            terms = terms[0]
+        return terms
 
     def _fetch_approle_token(self, cafile, capath, role_id, secret_id, approle_role_path, url, cahostverify):
         request_url = urljoin(url, approle_role_path)
