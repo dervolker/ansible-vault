@@ -55,6 +55,12 @@ class LookupModule(LookupBase):
         term_split = terms[0].split(' ', 1)
         key = term_split[0]
 
+        # Hack: Support the old syntax to keep it backward compatible
+        # Old lookup: {{ lookup('vault', 'my/vault/path') }}
+        # This is not common usable, as it interferes with the generic Ansible 2 syntax
+        #  Generic: {{ lookup('vault', 'my/vault/path') }}.value
+        if len(terms) == 1:
+            terms.append('value')
         # the environment variable takes precendence over the Ansible variable.
         cafile = os.getenv('VAULT_CACERT') or (variables or inject).get('vault_cacert')
         capath = os.getenv('VAULT_CAPATH') or (variables or inject).get('vault_capath')
